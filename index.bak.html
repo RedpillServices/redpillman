@@ -1,0 +1,55 @@
+<!DOCTYPE html> 
+<html> 
+    <head> 
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, user-scalable=no">
+        <link rel="stylesheet" href="css/themes/Redpill.min.css" />
+        <link rel="stylesheet" href="css/themes/jquery.mobile.icons.min.css" />
+        <link rel="stylesheet" href="js/jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.css" />
+        <link rel="stylesheet" href="css/styles.css" />
+        <title>Redpill Man</title>
+        <script src="js/jquery-1.11.2/jquery-1.11.2.min.js"></script>
+        <script src="js/jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.js"></script> 
+        <script src="js/redpillman.js"></script>
+    </head> 
+    <body>
+
+        <div data-role="page" id="page-main">
+
+            <div id="main-panel" data-display="overlay" data-role="panel">
+                <ul>
+                    <li class="sidebar-li"><a data-enhance="false" class="sidebar-button" href="password.html">Password</a></li>
+                    <li class="sidebar-li"><a data-enhance="false" class="sidebar-button" href="#page-about">About</a></li>
+                </ul>
+            </div>
+
+            <div data-id="main-header" data-role="header">
+
+                <h1><a href="#main-panel"><img class="menu-pill" src="redpillsmall.png"></a>Redpill Man</h1>
+            </div>
+
+
+            <div data-role="content">
+                <ul class="main-ul" data-role="listview">
+                    <li class="main-list"><a data-role="button" data-prefetch class="main-button" data-ajax="false" href="reddit.html" >TheRedPill</a></li>
+                    <li class="main-list"><a data-role="button" class="main-button" href="redpillcalculator.html">Redpill Calculator</a></li>
+
+                </ul>
+
+            </div>
+
+            <div data-role="footer">
+                <h4>Page Footer</h4>
+            </div>
+
+        </div>
+        <div data-role="page" id="page-about">
+            <div data-id="main-header" data-role="header"></div>
+            <div data-role="content" class="center-content">
+Redpill Man
+Version .8 Alpha
+            </div>
+        </div>
+
+    </body>
+</html>

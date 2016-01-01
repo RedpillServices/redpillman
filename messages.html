@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, user-scalable=no">
+        <link rel="stylesheet" href="css/themes/Redpill.min.css" />
+        <link rel="stylesheet" href="css/themes/jquery.mobile.icons.min.css" />
+        <link rel="stylesheet" href="js/jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.css" />
+        <title>Reddit Messages</title>
+        <script src="js/jquery-1.11.2/jquery-1.11.2.min.js"></script> 
+        <script src="js/jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.js"></script> 
+        <script src="js/redpillman.js"></script>
+        <link rel="stylesheet" href="css/styles.css" />
+    </head>
+    <body>
+        <script src="js/snoocore/Snoocore-standalone.js"></script>
+        <div data-role="page" id="page-messages">
+                    <script>
+                        function switchContent() {
+                getAll("unread").done(function() {
+                    $.mobile.loading("hide");
+                });
+            }
+            
+
+var reddit = new window.Snoocore({
+                userAgent: 'Redpill Man',
+                login: {username: localStorage.username, password: localStorage.password}
+
+            });
+            var loginPromise = reddit.login();
+
+            reddit.raw('http://www.reddit.com/api/me.json').get({
+            }).then(function(data) {
+                mainReddit(data);
+            });
+            
+                        /*
+                 * Grabs the reddit content
+                 */
+                function getAlla() {
+
+                    var children = [];
+
+                    function handleSlice(slice) {
+                        console.log("SLICE");
+                        console.log(slice);
+                        if (slice.empty) {
+                            return children;
+                        }
+
+                        printSlice(slice);
+                        children = children.concat(slice.children);
+                        if (slice.count > 1) {
+                            return;
+                        }
+                        else {
+                            return slice.next().then(handleSlice);
+                        }
+                    }
+                    return reddit.raw('http://www.reddit.com/message/unread.json').get({
+                    }).then(handleSlice);
+                }
+                
+                                function printSlice(slice) {
+                    console.log("SLICE ABOUT TO SLICE");
+                    console.log(slice);
+                    slice.data.children.forEach(function(item) {
+                        console.log("ITEM ABOUT TO ITEM");
+                        console.log(item);
+                        console.log(item.data.body);
+                        var output = document.getElementById("output");
+                        var message = document.createElement("div");
+                        message.setAttribute("class", "gray");
+                        message.innerHTML = "<div class='comment-author'>" + item.data.author + "</div><div class='comment-subject'>" + item.data.subject +"</div><div class='reddit-row'>" + item.data.body + "</div>";
+                        output.appendChild(message);
+                    });
+                }
+
+            
+
+            /*
+             * Main function, allows processing of everything
+             */
+            function mainReddit(data) {
+console.log(data);
+getAlla().done();
+            }
+        </script>
+            <div class="absolute-header" data-id="main-header" data-role="header"><a class="back-button" href="#" data-rel="back">BACK</a><h1>Redpill Man</h1></div>
+            <div data-role="main" class="content">
+                <h3 class="center-h3">Messages</h3>
+                <div class="controls" data-mini="true" data-type="horizontal" data-role="controlgroup">
+                    <a href="#" onclick="switchContent()" data-role="button">Inbox</a>
+                    <a href="#" onclick="switchContent()" data-role="button">Unread</a>
+                    <a href="#" onclick="switchContent()" data-role="button">Sent</a>
+                </div>
+                <div id="output"></div>
+            </div>
+        </div>
+    </body>
+</html>

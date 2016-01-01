@@ -1,0 +1,79 @@
+﻿<!DOCTYPE html> 
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, user-scalable=no">
+        <link rel="stylesheet" href="css/themes/Redpill.min.css" />
+        <link rel="stylesheet" href="css/themes/jquery.mobile.icons.min.css" />
+        <link rel="stylesheet" href="js/jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.css" />
+        <link rel="stylesheet" href="css/styles.css" />
+        <script src="js/jquery-1.11.2/jquery-1.11.2.min.js"></script> 
+        <script src="js/jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.js"></script> 
+        <script src="js/redpillman.js"></script>
+        <script src="js/SQLitePlugin.js"></script>
+        <script src="cordova.js"></script>
+        <script>
+            $(document).ready(function() 
+            $('#redpill').css('-webkit-filter', '180deg');
+                $(function()
+                {
+                    $('input[type=radio]').each(function()
+                    {
+                        var state = JSON.parse(localStorage.getItem('radio_' + $(this).attr('id')));
+                        if (state.checked === true) {
+                            $("label[for=" + $(this).attr('id') + "]").removeClass('ui-radio-off');
+                            $("label[for=" + $(this).attr('id') + "]").addClass('ui-radio-on');
+                            $(this).attr('checked', state.checked);
+                            $(this).attr('checked', state.true).checkradiobox("refresh");
+                        }
+                    });
+                });
+                $(window).bind('unload', function()
+                {
+                    $('input[type=radio]').each(function()
+                    {
+                        localStorage.setItem(
+                                'radio_' + $(this).attr('id'), JSON.stringify({checked: this.checked})
+                                );
+                        if(this.checked === true) {
+                        localStorage.setItem(
+                                "focusValue", $(this).attr('id')
+                                );
+                    }
+                    });
+                });
+            });
+        </script>
+        <title>Redpill Man Calculator</title>
+    </head>
+    <body> 
+            <div data-add-back-btn="true" data-role="page" id="redpillcalculator">
+<div class="tablist-content">
+                <div data-role="header">
+                    <a href="#" data-rel="back">back</a><h1>Redpill Man</h1>
+                </div>
+
+                <div data-role="content">
+                    <form>
+                        <fieldset data-role="controlgroup">
+                            <legend><h2>What is your current life focus?</h2></legend>
+                            <input type="radio" name="radio-choice-1" id="radio-choice-1" value="choice-1">
+                            <label for="radio-choice-1">Dating</label>
+                            <input type="radio" name="radio-choice-1" id="radio-choice-2" value="choice-2">
+                            <label for="radio-choice-2">Financial/Professional</label>
+                            <input type="radio" name="radio-choice-1" id="radio-choice-3" value="choice-3">
+                            <label for="radio-choice-3">Education/Development</label>
+                            <input type="radio" name="radio-choice-1" id="radio-choice-4" value="choice-4">
+                            <label for="radio-choice-4">Social Status</label>
+                        </fieldset>
+                    </form>
+                    <a data-ajax="false" href="quiz.html" data-role="button">Start Quiz!</a>
+                </div>
+
+            </div>
+        </div>
+
+        <script src="js/quiz/app.js"></script>
+        <script src="js/quiz/quiz.js"></script>
+    </body>
+</html>

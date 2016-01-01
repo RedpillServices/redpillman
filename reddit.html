@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, user-scalable=no">
+        <link rel="stylesheet" href="css/themes/Redpill.min.css" />
+        <link rel="stylesheet" href="css/themes/jquery.mobile.icons.min.css" />
+        <link rel="stylesheet" href="js/jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.css" />
+        <link rel="stylesheet" href="css/styles.css" />
+        <title>Reddit</title>
+        <script src="js/jquery-1.11.2/jquery-1.11.2.min.js"></script>
+        <script src="js/jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.js"></script> 
+        <script src="js/redpillman.js"></script>
+        <script>
+         (function () {
+    
+     setTimeout(function(){
+    $.mobile.loading('show');
+},1); 
+    // hide after two seconds
+    // setTimeout(function(){ $.mobile.loading("hide");}, 2000);
+ })();
+ </script>
+    </head>
+
+    <body>
+        <div data-add-back-btn="true" data-role="page" id="reddit">
+                         <!--   <div data-role="header">
+                    <h1>TheRedPill</h1>
+                </div>-->
+                         <div data-id="main-header" data-role="header"><a href="#" data-rel="back">back</a><h1>Redpill Man</h1></div>
+            <div role="main" class="ui-content">
+<div id="output">   </div>
+            </div>
+        </div>
+        <script src="js/snoocore/Snoocore-standalone.js"></script>
+        <script type="text/javascript">
+            (function () {
+     $.mobile.loading("show");
+     
+     
+     var reddit = new window.Snoocore({
+                    userAgent: 'Redpill Man',
+                    //login: {username: 'cocaine_face', password: 'Ragnar85uu'}
+                });
+
+             //   reddit.login().then(function() {*/
+
+     // Get information about a slice of a listing:
+     function printSlice(slice) {
+         slice.stickied.forEach(function (item, i) {
+             var div = document.getElementById('output');
+             var p = document.createElement("p");
+             var ahref = document.createElement("a");
+             ahref.setAttribute("href", "redditarticle.html?link=" + item.data.id);
+             ahref.setAttribute("data-ajax", "false");
+             ahref.innerHTML = '**STICKY**' + item.data.title;
+             p.appendChild(ahref);
+             div.appendChild(p);
+         });
+         slice.children.forEach(function (child, i) {
+             var div = document.getElementById('output');
+             //div.setAttribute("")
+             var p = document.createElement("p");
+             var ahref = document.createElement("a");
+             ahref.setAttribute("href", "redditarticle.html?link=" + child.data.id);
+             ahref.setAttribute("data-ajax", "false");
+             ahref.innerHTML = child.data.title;
+             p.appendChild(ahref);
+             div.appendChild(p);
+         });
+     }
+
+     function getAll() {
+
+         var children = [];
+
+         function handleSlice(slice) {
+             if (slice.empty) {
+                 return children;
+             }
+             printSlice(slice);
+             children = children.concat(slice.children);
+             if (slice.count > 1) {
+                 return;
+             } else {
+                 return slice.next().then(handleSlice);
+             }
+         }
+         return reddit('/r/TheRedPill/hot').listing({
+             limit: 20,
+         }).then(handleSlice);
+     }
+     getAll().done(function(){
+         $.mobile.loading("hide");
+     });
+    // });
+ })();
+        </script>
+    </body>
+</html>

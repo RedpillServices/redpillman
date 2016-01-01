@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+    <widget xmlns   = "http://www.w3.org/ns/widgets"
+        xmlns:gap   = "http://phonegap.com/ns/1.0"
+        id          = "com.balloonindustries.redpillman"
+        versionCode = "10" 
+        version     = "1.0.0" >
+        <access uri="*" subdomains="true" />
+
+    <!-- versionCode is optional and Android only -->
+	
+	<gap:plugin name="com.brodysoft.sqliteplugin" version="1.0.0" />
+        
+        <access origin="http://reddit.com" />
+	
+	<icon src="redpillmanicon.png" />
+	
+	<feature name="Geolocation">
+    <param name="android-package" value="org.apache.cordova.geolocation.GeoBroker" />
+</feature>
+
+<feature name="Geolocation">
+    <param name="ios-package" value="CDVLocation" />
+</feature>
+
+    <name>RedPill Man</name>
+
+    <description>
+        A primer to help teach men to become masculine
+    </description>
+
+    <author href="http://balloonindustries.com" email="contact@balloonindustries.com">
+        Balloon Industries, LLC
+    </author>
+
+</widget>

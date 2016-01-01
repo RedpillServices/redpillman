@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, user-scalable=no">
+        <link rel="stylesheet" href="css/themes/Redpill.min.css" />
+        <link rel="stylesheet" href="css/themes/jquery.mobile.icons.min.css" />
+        <link rel="stylesheet" href="js/jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.css" />
+        <title>Reddit Article</title>
+        <script src="js/jquery-1.11.2/jquery-1.11.2.min.js"></script> 
+        <script src="js/jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.js"></script> 
+        <script src="js/redpillman.js"></script>
+        <link rel="stylesheet" href="css/styles.css" />
+    </head>
+    <body>
+        <div data-add-back-btn="true" data-role="page" id="redditarticle">
+
+<div class="absolute-header" data-id="main-header" data-role="header"><a class="back-button" href="#" data-rel="back">BACK</a><h1>Redpill Man</h1></div>
+            <div role="main" class="ui-content content">
+                <div id="output"></div>
+            </div>
+
+            <div data-role="popup" class="ui-content" id="popupBasic">
+                <form>
+                    <h3>Comment</h3>
+                    <textarea rows="5" id="commentBox"></textarea>
+                </form>
+                <button type="button" id="sub-comment" class=" ui-btn ui-btn-b ui-shadow ui-corner-all">Save</button>
+                <a href="#" data-rel="back" data-role="button" data-icon="delete" data-iconpos="notext" class="ui-btn-right ui-btn-corner-all">Close</a>
+            </div>
+            <div data-role="popup" class="ui-content" id="popupSave">
+                <p>Comment saved.</p>
+            </div>
+
+
+        <script src="js/snoocore/Snoocore-standalone.js"></script>
+        <script type="text/javascript">
+            var reddit = new window.Snoocore({
+                userAgent: 'Redpill Man',
+                login: {username: localStorage.username, password: localStorage.password}
+            });
+
+            var loginPromise = reddit.login();
+
+            reddit.raw('http://www.reddit.com/api/me.json').get({
+            }).then(function(data) {
+                console.log("LOGIN DATA");
+                console.log(data);
+                mainReddit(data);
+            });
+
+            /*
+             * Main function, allows processing of everything
+             */
+            function mainReddit(data) {
+// Get information about a slice of a listing:
+                function printSlice(slice) {
+                    slice.forEach(function(item) {
+                        item.data.children.forEach(function(child) {
+                            if (child.kind === "t3") {
+                                generateArticle(child);
+                            }
+                            else if (child.kind === "t1") {
+                                generateComments(child, data);
+                            }
+                        });
+
+                    });
+                }
+
+                /*
+                 * Creates article - glue function that adds a lot of stuff together
+                 */
+                function generateArticle(child) {
+
+                    // Create the structure for the article
+
+                    var div = document.getElementById('output');
+                    var article = document.createElement("div");
+                    var title = document.createElement("div");
+                    var author = document.createElement("span");
+
+                    // Create the comment, voting and title section
+
+                    author.setAttribute("id", "byline-author");
+                    title.setAttribute("id", "whole-title");
+                    title.innerHTML = "<h2>" + "<div id='score'>" + child.data.score + "</div>" + "<div id='title'>" + child.data.title + "</div></h2>";
+                    author.innerHTML = "<span id='byline'>submitted by</span> " + "<span id='author'>" + child.data.author + "</span>";
+                    article = arrowsGenerate(child.kind, child.data.id, article, "full", data, child);
+                    article.appendChild(title);
+                    article.appendChild(author);
+                    article = saveButtonCreate(article, data);
+
+                    // Create the article text
+
+                    var articleBody = document.createElement("div");
+                    articleBody.setAttribute("id", "article-body");
+                    article.appendChild(articleBody);
+                    div.appendChild(article);
+                    var articleBodyHTML = $('<textarea />').html(child.data.selftext_html).text();
+                    $("#article-body").html(articleBodyHTML);
+                    div.appendChild(article);
+
+                    // Style everything with jQuery Mobile and custom styling
+
+                    $('#response').textinput();
+                    $("#save-button").button();
+                }
+
+                /*
+                 * Grabs the reddit content
+                 */
+                function getAll() {
+
+                    var children = [];
+
+                    function handleSlice(slice) {
+                        if (slice.empty) {
+                            return children;
+                        }
+
+                        printSlice(slice);
+                        children = children.concat(slice.children);
+                        if (slice.count > 1) {
+                            return;
+                        }
+                        else {
+                            return slice.next().then(handleSlice);
+                        }
+                    }
+                    url = getUrlVars()['link'];
+                    return reddit.raw('/r/TheRedPill/comments/' + url + "/redpill.json").get({
+                    }).then(handleSlice);
+                }
+
+                getAll().done();
+            }
+
+            /*
+             * Creates a save button
+             */
+            function saveButtonCreate(element, data) {
+                if ($.isEmptyObject(data) === false) {
+                    var textarea = document.createElement("textarea");
+                    textarea.setAttribute("id", "response");
+                    element.appendChild(textarea);
+                    var saveButton = document.createElement("input");
+                    saveButton.setAttribute("type", "button");
+                    saveButton.setAttribute("value", "Save");
+                    saveButton.setAttribute("id", "save-button");
+                    saveButton.setAttribute("data-role", "button");
+                    saveButton.setAttribute("onclick", "postComment()");
+                    element.appendChild(saveButton);
+                }
+                return element;
+            }
+
+            /*
+             * Create arrows and append to element
+             */
+            function arrowsGenerate(kind, id, element, size, data, reply) {
+                if ($.isEmptyObject(data) === false && reply.data.author !== "[deleted]") {
+                    var arrows = document.createElement("div");
+                    if (size === "full") {
+                        arrows.setAttribute("class", "vote-arrows");
+                    }
+                    else if (size === "small") {
+                        arrows.setAttribute("class", "vote-arrows-small");
+                    }
+                    arrows.setAttribute("id", "mainArrow-" + kind + "_" + id);
+                    if (reply.data.likes == true) {
+                        arrows.setAttribute("value", 1);
+                    }
+                    else if (reply.data.likes == false) {
+                        arrows.setAttribute("value", -1);
+                    }
+                    else {
+                        arrows.setAttribute("value", 0);
+                    }
+
+                    // Appending Arrows to Article
+
+                    var kindid = kind + "_" + id;
+
+                    var upArrowDiv = upArrow(kindid, size, reply);
+                    var downArrowDiv = downArrow(kindid, size, reply);
+
+                    arrows.appendChild(upArrowDiv);
+                    arrows.appendChild(downArrowDiv);
+                    element.appendChild(arrows);
+                }
+                return element;
+            }
+
+            /*
+             * Create Up Arrow
+             */
+            function upArrow(kindid, size, reply) {
+                // Creating the Up Arrow
+
+                if (reply.data.likes == true) {
+                    var opacity = "";
+                }
+                else {
+                    var opacity = "opacity ";
+                }
+
+                var arrowSize = "arrow-" + size;
+                var upArrowDiv = document.createElement("div");
+                var upArrow = document.createElement("input");
+                upArrow.setAttribute("src", "redpillsmall.png");
+                upArrow.setAttribute("type", "image");
+                upArrow.setAttribute("id", "uparrow" + kindid);
+                upArrow.setAttribute("data-iconpos", "notext");
+                upArrow.setAttribute("class", "up-arrow " + opacity + arrowSize);
+                upArrow.setAttribute("onclick", "upVote('uparrow" + kindid + "', " + "'downarrow" + kindid + "', '" + kindid + "', '" + reply.data.id + "', '" + reply.kind + "')");
+                upArrowDiv.appendChild(upArrow);
+                return upArrowDiv;
+            }
+
+            /*
+             * Create Down Arrow
+             */
+            function downArrow(kindid, size, reply) {
+
+                // Creating the Down Arrow
+                if (reply.data.likes == false) {
+                    var opacity = "";
+                }
+                else {
+                    var opacity = "opacity ";
+                }
+
+                var arrowSize = "arrow-" + size;
+                var downArrowDiv = document.createElement("div");
+                var downArrow = document.createElement("input");
+                downArrow.setAttribute("src", "redpillsmall.png");
+                downArrow.setAttribute("type", "image");
+                downArrow.setAttribute("id", "downarrow" + kindid);
+                downArrow.setAttribute("data-role", "none");
+                downArrow.setAttribute("class", "down-arrow " + opacity + arrowSize);
+                downArrow.setAttribute("onclick", "downVote('uparrow" + kindid + "', " + "'downarrow" + kindid + "', '" + kindid + "', '" + reply.data.id + "', '" + reply.kind + "')");
+                downArrowDiv.appendChild(downArrow);
+                return downArrowDiv;
+            }
+
+            function changePointValue() {
+
+            }
+
+            /*
+             * Generates the first comment - eventually this should be reduced until it is baked into recursiveComment()
+             */
+            function generateComments(child, data) {
+                var div = document.getElementById('output');
+                if (typeof child.data.author !== 'undefined') {
+                    var topComment = document.createElement("div");
+                    var topCommentId = "#" + child.data.id;
+                    topComment.setAttribute("id", child.data.id);
+                    topComment.setAttribute("class", "ui-content gray");
+                    div.appendChild(topComment);
+                    var totalComment = makeTotalComment(data, child);
+                    $(topCommentId).html(totalComment);
+
+                    innerComment = recursiveComment(topComment, child.data, 0, data, "new");
+                }
+            }
+
+            /*
+             * Creates subsequent comments and also updates comments. Will eventually be the only comment creation function
+             * Note: this function is a clusterfuck, and arguably the messiest function of the entire program. Here be a blackbox of destruction.
+             */
+            function recursiveComment(comment, reddit, zebra, data, condition) {
+                console.log("REDDIT");
+                console.log(reddit);
+                zebra = zebraProcess(zebra);
+                console.log("before replies");
+                console.log(comment.replies);
+                console.log(reddit.replies);
+                if (reddit.replies && condition !== "edit") {
+                    console.log("after replies");
+                    reddit.replies.data.children.forEach(function(reply) {
+                        if (typeof reply.data.author !== 'undefined') {
+                            if (condition === "new") {
+                                var innerComment = document.createElement("div");
+                                var innerCommentId = "#" + reply.data.id;
+                                innerComment.setAttribute("id", reply.data.id);
+                            }
+                            if (condition === "resave") {
+
+                                // Normalize data - ultimately this should be fixed, but it works fine, so no need to optimize yet.
+
+                                var innerComment = document.getElementById(reply.data.id);
+                                if ($.isEmptyObject(innerComment)) {
+                                    var innerComment = document.createElement("div");
+                                    var innerCommentId = "#" + reply.data.id;
+                                    innerComment.setAttribute("id", reply.data.id);
+                                }
+                                if (typeof comment === "string") {
+                                    comment = document.getElementById(comment);
+                                }
+                            }
+                            if (zebra === 0) {
+                                innerComment.setAttribute("class", "gray ui-content");
+                            }
+                            else if (zebra === 1) {
+                                innerComment.setAttribute("class", "white ui-content");
+                            }
+                            comment.appendChild(innerComment);
+                            var totalComment = makeTotalComment(data, reply);
+                            console.log("totalComment");
+                            console.log(totalComment);
+                            $(innerCommentId).html(totalComment);
+                            recursiveComment(innerComment, reply.data, zebra, data, condition);
+                        }
+                    });
+                }
+                
+                else if (condition === "edit") {
+                    console.log("Yeahhhhh buddy");
+                    
+                        if (typeof reddit.author !== 'undefined') {
+                            if (condition === "new") {
+                                var innerComment = document.createElement("div");
+                                var innerCommentId = "#" + reddit.id;
+                                console.log("did this work");
+                                innerComment.setAttribute("id", reddit.id);
+                                console.log("yep");
+                            }
+
+                                // Normalize data - ultimately this should be fixed, but it works fine, so no need to optimize yet.
+
+                                var innerComment = document.getElementById(reddit.id);
+                                if ($.isEmptyObject(innerComment)) {
+                                    var innerComment = document.createElement("div");
+                                    var innerCommentId = "#" + reddit.id;
+                                    innerComment.setAttribute("id", reddit.id);
+                                }
+                                if (typeof comment === "string") {
+                                    comment = document.getElementById(comment);
+                                }
+                            
+                            if (zebra === 1) {
+                                innerComment.setAttribute("class", "gray ui-content");
+                            }
+                            else if (zebra === 0) {
+                                innerComment.setAttribute("class", "white ui-content");
+                            }
+                            //comment.appendChild(innerComment);
+                            var totalComment = makeTotalComment(data, reddit);
+                            $("#" + reddit.id).html(totalComment);
+                        }
+                    
+                }
+                
+                else if (comment.replies === "") {
+                    console.log("This got executed");
+                    zebra = zebraProcess(zebra);
+                    recursiveComment(innerComment, reply.data, zebra, data, condition);
+                }
+            }
+
+            /*
+             * Creates score and points to be added to the article as well as to the individual comments
+             */
+            function scoreMaker(reply) {
+                if (reply.data.author !== "[deleted]") {
+                    if (reply.data.score === 1) {
+                        var score = reply.data.score;
+                        var point = "point";
+                    }
+                    else if (reply.data.score > 1 || reply.data.score < 1) {
+                        var score = reply.data.score;
+                        var point = "points";
+                    }
+                }
+                else {
+                    var score = "";
+                    var point = "";
+                }
+                return {score: score, point: point};
+            }
+
+            /*
+             * Makes the total comment to be placed into the comment div
+             */
+            function makeTotalComment(data, reply) {
+                // Hacky solution to add .data to edit text - so program doesn't choke
+                if(typeof reply.data === "undefined") {
+                    reply.data = reply;
+                    reply.kind = "t1";
+                }
+                console.log(reply);
+                var commentBodyHTML = $('<textarea />').html(reply.data.body_html).text();
+                console.log("COMMENTBODYHTML");
+                console.log(commentBodyHTML);
+                var commentMaker = commentMake(data, reply);
+                var scores = scoreMaker(reply);
+                var element = document.createElement("div");
+                element = arrowsGenerate(reply.kind, reply.data.id, element, "small", data, reply);
+                var scoreSpan = "<span class='comment-score'>" + scores.score + " " + scores.point + "</span>";
+                var commentAuthor = "<p class='comment-author'>" + reply.data.author + scoreSpan + "</p>";
+                var commentBody = "<div class='comment-body'>" + commentAuthor + commentBodyHTML + commentMaker + "</div>";
+                var totalComment = element.outerHTML + commentBody;
+                return totalComment;
+            }
+
+            /*
+             * Switches zebra from on to off and vice versa. Used for coloring comments
+             */
+            function zebraProcess(zebra) {
+                if (zebra === 1) {
+                    zebra = 0;
+                }
+                else if (zebra === 0) {
+                    zebra = 1;
+                }
+                return zebra;
+            }
+
+            /*
+             * Deletes a comment
+             */
+            function delComment(id) {
+                child = $("#" + id.id).find($("p"))[1];
+                commentScore = $("#" + id.id).find($(".comment-score"))[0];
+                commentAuthor = $("#" + id.id).find($(".comment-author"))[0];
+                commentDelete = $("#" + id.id).find($("a"))[1];
+                $(child).text("[deleted]");
+                $(commentScore).remove();
+                $(commentAuthor).text("[deleted]");
+                $(commentDelete).remove();
+                reddit.raw('http://www.reddit.com/api/me.json').get({
+                }).then(function(data) {
+                    reddit('/api/del').post({
+                        id: "t1_" + id.id,
+                        uh: data.data.modhash
+                    });
+                });
+            }
+
+            /*
+             * Creates the responses to a comment for a logged in user
+             */
+            function commentMake(data, reply) {
+                if ($.isEmptyObject(data) === false) {
+                    if (data.data.name === reply.data.author) {
+                        var deleteLink = "<a href='#delete' onclick='delComment(" + reply.data.id + ")'>Delete</a>";
+                        var editLink = "<a href='#popupBasic' data-rel='popup' data-position-to='window' onclick='editPopup(" + reply.data.id + ", \"edit\")'>Edit</a>";
+                    }
+                    else if (data.data.name !== reply.data.author) {
+                        var deleteLink = "";
+                        var editLink = "";
+                    }
+                    var commentMaker = '<a href="#popupBasic" data-rel="popup" onclick="editPopup(' + reply.data.id + ', \'comment\')" data-position-to="window">Reply</a>' + deleteLink + editLink;
+                }
+                else {
+                    var commentMaker = "";
+                }
+                return commentMaker;
+            }
+
+            function calcPoints(score, direction, type, status) {
+                // Looks at whether it's a calculation for an article or for a comment
+                // Adds "points" to values on comments - just like Reddit
+                if (type == "t1") {
+                    var splitScore = score.split(" ");
+                    var scoreValue = Number(splitScore[0]);
+                }
+                else if (type === "t3") {
+                    var scoreValue = Number(score);
+                }
+                var totalScoreValue = scoreValue;
+                if (direction === "up" && status !== 1) {
+                    totalScoreValue = scoreValue + 1;
+                }
+                else if (direction === "up" && status === 1) {
+                    totalScoreValue = scoreValue - 1;
+                }
+                else if (direction === "down" && status !== -1) {
+                    if (type === "t3" && status > 0) {
+                        totalScoreValue = scoreValue - 1;
+                    }
+                    else if (type === "t1") {
+                        totalScoreValue = scoreValue - 1;
+                    }
+                }
+                else if (direction === "down" && status === -1) {
+                    if(type === "t3" && scoreValue !== 0) {
+                    totalScoreValue = scoreValue + 1;
+                }
+                else if (type === "t1") {
+                    totalScoreValue = scoreValue + 1;
+                }
+                }
+                if (totalScoreValue === 1 && type === "t1") {
+                    var splitScorePoints = "point";
+                }
+                else if (totalScoreValue !== 1 && type === "t1") {
+                    var splitScorePoints = "points";
+                }
+                if (type == "t1") {
+                    totalScoreValue = totalScoreValue.toString().concat(" ", splitScorePoints);
+                }
+                return totalScoreValue;
+            }
+
+            function changeVote(id, direction, type, status) {
+                if (type === "t1") {
+                    var score = $("#" + id).find($(".comment-score"))[0].innerHTML;
+                }
+                else if (type === "t3") {
+                    var score = $("#score").text();
+                }
+                score = calcPoints(score, direction, type, status);
+                if (type === "t1") {
+                    $("#" + id).find($(".comment-score"))[0].innerHTML = score;
+                }
+                else if (type === "t3") {
+                    $("#score").empty();
+                    $("#score").text(score);
+                }
+            }
+
+            /*
+             * Directs the program on what to do in the case of an up vote
+             */
+            function upVote(upArrow, downArrow, voteItem, id, type) {
+                var voteStatus = Number($("#mainArrow-" + type + "_" + id).attr("value"));
+                changeVote(id, "up", type, voteStatus);
+                if (typeof voteStatus === "undefined" || voteStatus === 0 || voteStatus === -1) {
+                    voteStatus = 1;
+                    $("#mainArrow-" + type + "_" + id).attr("value", "1");
+                    postVote(voteStatus, voteItem);
+                    $("#" + upArrow).removeClass("opacity");
+                    $("#" + downArrow).addClass("opacity");
+                }
+                else if (voteStatus === 1) {
+                    voteStatus = 0;
+                    $("#mainArrow-" + type + "_" + id).attr("value", "0");
+                    postVote(voteStatus, voteItem);
+                    $("#" + upArrow).addClass("opacity");
+                }
+            }
+
+            /*
+             * Directs the program on what to do in the case of a down vote
+             */
+            function downVote(upArrow, downArrow, voteItem, id, type) {
+                var voteStatus = Number($("#mainArrow-" + type + "_" + id).attr("value"));
+                changeVote(id, "down", type, voteStatus);
+                if (typeof voteStatus === "undefined" || voteStatus === 0 || voteStatus === 1) {
+                    voteStatus = -1;
+                    $("#mainArrow-" + type + "_" + id).attr("value", "-1");
+                    postVote(voteStatus, voteItem);
+                    $("#" + downArrow).removeClass("opacity");
+                    $("#" + upArrow).addClass("opacity");
+                }
+                else if (voteStatus === -1) {
+                    voteStatus = 0;
+                    $("#mainArrow-" + type + "_" + id).attr("value", "0");
+                    postVote(voteStatus, voteItem);
+                    $("#" + downArrow).addClass("opacity");
+                }
+            }
+
+            /*
+             * Post a vote to the Reddit API
+             */
+            function postVote(voteValue, voteItem) {
+
+                reddit.raw('http://www.reddit.com/api/me.json').get({
+                }).then(function(data) {
+                    reddit('/api/vote').post({
+                        dir: voteValue,
+                        id: voteItem,
+                        uh: data.data.modhash
+                    });
+                });
+            }
+
+            /*
+             * Post a comment on a comment. Will probably eventually be subsumed into the postComment() function
+             */
+            function postSubComment(id, process) {
+                reddit.raw('http://www.reddit.com/api/me.json').get({
+                }).done(function(data) {
+                    var commentText = document.getElementById("commentBox").value;
+                    if(process === "comment") {
+                    reddit('/api/comment').post({
+                        thing_id: "t1_" + id,
+                        text: commentText,
+                        uh: data.data.modhash
+                    });
+                }
+                else if (process === "edit") {
+                    reddit('/api/editusertext').post({
+                        thing_id: "t1_" + id,
+                        text: commentText,
+                        uh: data.data.modhash
+                    });
+                }
+
+                    document.getElementById("commentBox").value = "";
+                });
+
+                $('#popupBasic').popup("close");
+                setTimeout(function() {
+                    $('#popupSave').popup('open')
+                }, 1);
+
+                link = getUrlVars()['link'].substring(0, getUrlVars()['link'].indexOf('#'));
+
+                reddit.raw('http://www.reddit.com/api/me.json').get({
+                }).then(function(info) {
+                    reddit.raw('/r/TheRedPill/comments/' + link + ".json?comment=" + id + "&context=0").get({
+                    }).then(function(data) {
+                        parent_id = data[1].data.children[0].data.parent_id.substring(data[1].data.children[0].data.parent_id.indexOf("t1_") + 3);
+                        var element = $("#" + data[1].data.children[0].data.id);
+                        if (element.hasClass("gray")) {
+                            var zebra = 0;
+                        }
+                        else if (element.hasClass("white")) {
+                            var zebra = 1;
+                        }
+                        if(process === "comment") {
+                            var resave = "resave";
+                        }
+                        else if (process === "edit") {
+                            var resave = "edit";
+                        }
+                        
+                        recursiveComment(data[1].data.children[0].data.id, data[1].data.children[0].data, zebra, info, resave);
+
+                    });
+                });
+            }
+
+            /*
+             * Not sure, investigate
+             */
+            function editPopup(commentId, process) {
+                if(process === "edit") {
+                    console.log("EDIT!!!!!!! PAY ATTENTION TO ME");
+                var commentBoxText = $("#" + commentId.id).find($("p"))[1];
+                $("#commentBox").text(commentBoxText.innerHTML);
+            }
+            else if(process === "comment") {
+                document.getElementById("commentBox").value = "";
+            }
+                
+                $("#sub-comment").attr("onclick", "postSubComment('" + commentId.id + "', '" + process + "')");
+            }
+
+            /*
+             * Posts a main comment to the subreddit. May eventually contain postSubComment()
+             */
+            function postComment() {
+                reddit.raw('http://www.reddit.com/api/me.json').get({
+                }).then(function(data) {
+                    var commentText = document.getElementById("response").value;
+                    link = getUrlVars()['link'].substring(0, getUrlVars()['link'].indexOf('#'));
+                    reddit('/api/comment').post({
+                        thing_id: "t3_" + link,
+                        text: commentText,
+                        uh: data.data.modhash
+                    });
+                    // document.getElementById("response").value = "";
+                });
+                $('#popupBasic').popup("close");
+                setTimeout(function() {
+                    $('#popupSave').popup('open')
+                }, 1);
+
+            }
+        </script>
+        </div>
+    </body>
+</html>

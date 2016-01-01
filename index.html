@@ -1,0 +1,628 @@
+<!DOCTYPE html> 
+<html> 
+    <head> 
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, user-scalable=no">
+        <link rel="stylesheet" href="css/themes/Redpill.min.css" />
+        <link rel="stylesheet" href="css/themes/jquery.mobile.icons.min.css" />
+        <link rel="stylesheet" href="js/jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.css" />
+        <title>Redpill Man</title>
+        <script src="js/jquery-1.11.2/jquery-1.11.2.min.js"></script>
+        <script src="js/jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.js"></script> 
+        <script src="js/redpillman.js"></script>
+        <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+        <link rel="stylesheet" href="css/styles.css" />
+        <script src="js/snoocore/Snoocore-standalone.js"></script>
+        <style>
+            .gm-style .gm-style-mtc label,.gm-style .gm-style-mtc div{font-weight:400}.gm-style .gm-style-cc span,.gm-style .gm-style-cc a,.gm-style .gm-style-mtc div{font-size:10px}@media print {  .gm-style .gmnoprint, .gmnoprint {    display:none  }}@media screen {  .gm-style .gmnoscreen, .gmnoscreen {    display:none  }}.gm-style{font-family:Roboto,Arial,sans-serif;font-size:11px;font-weight:400;text-decoration:none}.gm-style img{max-width:none}
+            #locator, #map-canvas { width: 100%; height: 100%; padding: 0; }
+        </style>
+    </head>
+    <body>
+
+        <div data-role="page" id="page-main">
+            <script>
+                $(document).on("pageshow", "[data-role=page]", function(event, ui)
+                {
+                    var reddit = new window.Snoocore({
+                        userAgent: 'Redpill Man',
+                        login: {username: localStorage.username, password: localStorage.password}
+
+                    });
+                    var loginPromise = reddit.login();
+
+                    reddit.raw('http://www.reddit.com/api/me.json').get({
+                    }).then(function(data) {
+                        mainRedditstuff(data);
+                    });
+                    function mainRedditstuff(data) {
+                        console.log($.mobile.activePage[0].id);
+                        if (data.data.has_mail == true) {
+                            $(".menu-mail").attr("src", "orange mail.png");
+                        }
+                        else {
+                            $(".menu-mail").attr("src", "black mail.png");
+                        }
+                    }
+                });
+
+
+            </script>
+            <div id="main-panel" data-display="overlay" data-role="panel">
+                <ul>
+                    <li class="sidebar-li"><a data-enhance="false" class="sidebar-button" href="#page-password">Password</a></li>
+                    <li class="sidebar-li"><a data-enhance="false" class="sidebar-button" href="#page-about">About</a></li>
+                </ul>
+            </div>
+
+            <div class="absolute-header" data-id="main-header" data-role="header"><h1><a href="#main-panel"><img class="menu-pill" src="redpillsmall.png"></a>Redpill Man<a href="#page-messages"><img id="mail" class="menu-mail"></a></h1></div>
+
+
+            <div class="content" data-role="content">
+                <ul class="main-ul" data-role="listview">
+                    <li class="main-list"><a data-role="button" data-prefetch class="main-button" href="#reddit" >TheRedPill</a></li>
+                    <li class="main-list"><a data-role="button" data-prefetch class="main-button" href="#locator" >Redpill Locator</a></li>
+                    <li class="main-list"><a data-role="button" class="main-button" href="#redpillcalculator">Redpill Calculator</a></li>
+                    <li class="main-list"><a data-role="button" class="main-button" href="#lifting">Weight Lifting</a></li>
+                    <li class="main-list"><a data-role="button" class="main-button" href="#page-dictionary-front">Dictionary</a></li>
+                    <li class="main-list"><a data-role="button" class="main-button" href="#page-resources">Resources</a></li>
+                </ul>
+
+            </div>
+
+        </div>
+
+        <div data-role="page" id="locator">
+            <div class="absolute-header" data-id="main-header" data-role="header"><a class="back-button" href="#" data-rel="back">BACK</a><h1>Redpill Locator<a href="#page-messages"><img id="mail-reddit" class="menu-mail"></a></h1></div>
+            <div data-role="content" class="center-content content">
+
+                <script>
+                    $(document).on("pageshow", "#locator", function() {
+                        var defaultLatLng = new google.maps.LatLng(40.7127, -74.0059);
+                        console.log("default");
+                        if (navigator.geolocation) {
+                            function success(pos) {
+                                // Location found, show map with these coordinates
+                                drawMap(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
+                            }
+                            function fail(error) {
+                                drawMap(defaultLatLng);  // Failed to find location, show default map
+                            }
+                            // Find the users current position.  Cache the location for 5 minutes, timeout after 6 seconds
+                            navigator.geolocation.watchPosition(success, fail, {maximumAge: 500000, enableHighAccuracy: true, timeout: 6000});
+                        } else {
+                            drawMap(defaultLatLng);  // No geolocation support, show default map
+                        }
+                        function drawMap(latlng) {
+                            var myOptions = {
+                                zoom: 10,
+                                center: latlng,
+                                mapTypeId: google.maps.MapTypeId.ROADMAP
+                            };
+                            console.log("LATLNG");
+                            console.log(latlng);
+                            var map = new google.maps.Map(document.getElementById("map-canvas"), myOptions);
+                            var url = "https://redpillservices.com/location?distance%5Blatitude%5D=" + latlng['G'] + "&distance%5Blongitude%5D=" + latlng['K'] + "&distance%5Bsearch_distance%5D=100&distance%5Bsearch_units%5D=mile";
+                            $.get(url, function(json) {
+                                console.log(json);
+
+                                json.forEach(function(data) {
+                                    console.log(data);
+                                    var coords = new google.maps.LatLng(data['Latitude'], data['Longitude']);
+                                    console.log(coords);
+                                    var marker = new google.maps.Marker({
+                                        position: coords,
+                                        map: map,
+                                    });
+                                    var infowindow = new google.maps.InfoWindow({
+                                        content: data['Name']
+                                    });
+                                    infowindow.open(map, marker);
+                                    marker.addListener('click', function() {
+                                       var msguser = document.getElementById("msguser"); 
+                                       msguser.innerHTML = data['Name'];
+                                    });
+                                    marker.setMap(map);
+                                });
+                            });
+                        }
+                    });
+
+                </script>
+
+                <div data-role="fieldcontain">
+                    <h3>Distance</h3>
+                    <input type="range" name="distance-number" id="distance-number" value="25" step="25" min="25" max="100" data-highlight="true" />
+                    <select name="distance-units" id="distance-units">
+                        <option value="miles">Miles</option>
+                        <option value="kilometers">Kilometers</option>
+                    </select>
+                </div>
+
+                <h3 id="msguser"></h3>
+            </div>
+            
+            <div id="map-canvas"></div>
+        </div>
+
+
+
+
+        <div data-role="page" id="lifting">
+            <div class="absolute-header" data-id="main-header" data-role="header"><a class="back-button" href="#" data-rel="back">BACK</a><h1>Redpill Man<a href="#page-messages"><img id="mail-reddit" class="menu-mail"></a></h1></div>
+            <div data-role="content" class="center-content content">
+                <h3>Lift Responsibly.</h3>
+                <a href="#deadlift"><div class="rounded-box"><img class="workout-list-image" src="workout-images/deadlift-lower.png">
+                        <div class="workout-text">Deadlift</div></div></a>
+
+                <a href="#bench-press"><div class="rounded-box"><img class="workout-list-image" src="workout-images/bench-press-lower.png">
+                        <div class="workout-text">Bench Press</div></div></a>
+
+                <a href="#press"><div class="rounded-box"><img class="workout-list-image" src="workout-images/press-lower.png">
+                        <div class="workout-text">Military Press (seated)</div></div></a>
+
+                <a href="#rows"><div class="rounded-box"><img class="workout-list-image" src="workout-images/row-lower.png">
+                        <div class="workout-text">Bent Over Row</div></div></a>
+
+                <a href="#squat"><div class="rounded-box"><img class="workout-list-image" src="workout-images/squat-lower.png">
+                        <div class="workout-text">Squat</div></div></a>
+
+
+
+            </div>
+        </div>
+
+
+        <div data-role="page" id="deadlift"><div class="absolute-header" data-id="main-header" data-role="header"><a class="back-button" href="#" data-rel="back">BACK</a><h1>Redpill Man<a href="#page-messages"><img id="mail-reddit" class="menu-mail"></a></h1></div>
+            <div data-role="content" class="center-content content">
+                <h3>Deadlift</h3>
+                <div class="workout-instructions">
+                    <p>Keep your back straight, feet shoulder width apart with your toes slightly angled out.</p>
+                    <p>Keep your arms straight, barbell close to your legs</p>
+                    <img class="workout-list-image-large" src="workout-images/deadlift-lower.png">
+                    <p>Lift the weight off the ground with explosive force</p>
+                    <p>You should lift until your hips and knees are in a locked position</p>
+                    <img class="workout-list-image-large" src="workout-images/deadlift-higher.png">
+                    <p>Keeping your back straight, bend your hips back first and begin to lower the barbell</p>
+                    <p>Finish by bending your knees as you lower the barbell to the ground</p>
+                </div>
+            </div></div>
+
+        <div data-role="page" id="bench-press"><div class="absolute-header" data-id="main-header" data-role="header"><a class="back-button" href="#" data-rel="back">BACK</a><h1>Redpill Man<a href="#page-messages"><img id="mail-reddit" class="menu-mail"></a></h1></div>
+            <div data-role="content" class="center-content content">
+                <h3>Bench Press</h3>
+                <div class="workout-instructions">
+                    <p>It is a smart idea to have a spotter for this exercise</p>
+                    <p>Lock your feet on the ground and place your hands near the outer knurling</p>
+                    <img class="workout-list-image-large" src="workout-images/bench-press-lower.png">
+                    <p>Take the bar off the rack and begin to slowly lower it</p>
+                    <p>Bring the bar down to your chest</p>
+                    <img class="workout-list-image-large" src="workout-images/bench-press-higher.png">
+                    <p>After that, use explosive motion to push the barbell back up</p>
+                    <p>The movement is finished when your arms are completely locked</p>
+                </div>
+            </div></div>
+
+        <div data-role="page" id="press"><div class="absolute-header" data-id="main-header" data-role="header"><a class="back-button" href="#" data-rel="back">BACK</a><h1>Redpill Man<a href="#page-messages"><img id="mail-reddit" class="menu-mail"></a></h1></div>
+            <div data-role="content" class="center-content content">
+                <h3>Military Press (seated)</h3>
+                <div class="workout-instructions">
+                    <p>This version of the military press is better for people who are new to lifting and have a weak back</p>
+                    <p>If your back is strong you may want to consider the standing military press</p>
+                    <img class="workout-list-image-large" src="workout-images/press-lower.png">
+                    <p>Sit on a military press bench and grip the barbell slightly greater than shoulder width</p>
+                    <p>Take the bar off the rack and bring it to your collarbone with elbows up</p>
+                    <img class="workout-list-image-large" src="workout-images/press-upper.png">
+                    <p>Push the bar over your head and lock out your arms</p>
+                    <p>Bring the barbell back down to end the rep</p>
+                </div>
+            </div></div>
+
+        <div data-role="page" id="rows"><div class="absolute-header" data-id="main-header" data-role="header"><a class="back-button" href="#" data-rel="back">BACK</a><h1>Redpill Man<a href="#page-messages"><img id="mail-reddit" class="menu-mail"></a></h1></div>
+            <div data-role="content" class="center-content content">
+                <h3>Bent Over Row</h3>
+                <div class="workout-instructions">
+                    <p>Bend knees slightly and keep your back flat</p>
+                    <p>Lift the barbell and bring it close to your body</p>
+                    <img class="workout-list-image-large" src="workout-images/row-lower.png">
+                    <p>Extend arms out to the locked position</p>
+                    <img class="workout-list-image-large" src="workout-images/row-higher.png">
+                    <p>Repeat until you are finished</p>
+                </div>
+            </div></div>
+
+        <div data-role="page" id="squat"><div class="absolute-header" data-id="main-header" data-role="header"><a class="back-button" href="#" data-rel="back">BACK</a><h1>Redpill Man<a href="#page-messages"><img id="mail-reddit" class="menu-mail"></a></h1></div>
+            <div data-role="content" class="center-content content">
+                <h3>Squat</h3>
+                <div class="workout-instructions">
+                    <p>Start squatting by placing the barbell on your back near your collarbone</p>
+                    <p>Keep your feet out near where your hips are, with your feet aimed slightly out</p>
+                    <img class="workout-list-image-large" src="workout-images/squat-higher.png">
+                    <p>As you go down, push your hips back first, and then bend your knees</p>
+                    <p>Make sure you keep weight on your heels, knees in line with your feet</p>
+                    <img class="workout-list-image-large" src="workout-images/squat-lower.png">
+                    <p>Go down until your hips are lower than your knees</p>
+                    <p>After that, come back up</p>
+                </div>
+            </div></div>
+
+
+
+        <div data-role="page" id="page-about">
+            <div class="absolute-header" data-id="main-header" data-role="header"><a class="back-button" href="#" data-rel="back">BACK</a><h1>Redpill Man<a href="#page-messages"><img id="mail-reddit" class="menu-mail"></a></h1></div>
+            <div data-role="content" class="center-content content">
+                Redpill Man
+                Version .85 Alpha
+            </div>
+        </div>
+
+        <div data-add-back-btn="true" data-role="page" id="reddit">
+            <div class="absolute-header" data-id="main-header" data-role="header"><a class="back-button" href="#" data-rel="back">BACK</a><h1>Redpill Man<a href="#page-messages"><img id="mail-reddit" class="menu-mail"></a></h1></div>
+            <!--<div role="main" class="ui-content">-->
+            <div id="output" class="reddit-main-select">
+                <div data-mini="true" data-type="horizontal" data-role="controlgroup">
+                    <a href="#" onclick="switchContent()" data-role="button">Hot</a>
+                    <a href="#" onclick="switchContent()" data-role="button">New</a>
+                    <a href="#" onclick="switchContent()" data-role="button">Rising</a>
+                    <a href="#" onclick="switchContent()" data-role="button">Controversial</a>
+                    <a href="#" onclick="switchContent()" data-role="button">Top</a>
+                </div>
+                <div id="list"></div> </div>
+            <!--</div>-->
+        </div>
+        <script>
+
+            $(document).ready(function() {
+                //$('#redpill').css('-webkit-filter', '180deg');
+                $(function()
+                {
+                    $('input[type=radio]').each(function()
+                    {
+                        var state = JSON.parse(localStorage.getItem('radio_' + $(this).attr('id')));
+                        if (state.checked === true) {
+                            $("label[for=" + $(this).attr('id') + "]").removeClass('ui-radio-off');
+                            $("label[for=" + $(this).attr('id') + "]").addClass('ui-radio-on');
+                            $(this).attr('checked', state.checked);
+                            $(this).attr('checked', state.true).checkradiobox("refresh");
+                        }
+                    });
+                });
+                $(window).bind('unload', function()
+                {
+                    $('input[type=radio]').each(function()
+                    {
+                        localStorage.setItem(
+                                'radio_' + $(this).attr('id'), JSON.stringify({checked: this.checked})
+                                );
+                        if (this.checked === true) {
+                            localStorage.setItem(
+                                    "focusValue", $(this).attr('id')
+                                    );
+                        }
+                    });
+                });
+            });</script>
+        <script type="text/javascript">
+            (function() {
+                $.mobile.loading("show");
+            })();
+            function switchContent() {
+                getAll("top").done(function() {
+                    $.mobile.loading("hide");
+                });
+            }
+
+            // Calculate and style item score
+            function itemScore(score) {
+                if (score == "0") {
+                    score = "*";
+                }
+                var finalScore = "<div class='front-score'>" + score + "</div>";
+                return finalScore;
+            }
+            function titleFormat(title) {
+                if (title.length > 60) {
+                    title = title.slice(0, 57);
+                    title = title + "...";
+                }
+                return title;
+            }
+
+            var reddit = new window.Snoocore({
+                userAgent: 'Redpill Man',
+            });
+
+            // Get information about a slice of a listing:
+            function printSlice(slice) {
+                slice.stickied.forEach(function(item, i) {
+                    var div = document.getElementById('list');
+                    var p = document.createElement("div");
+                    var container = document.createElement("div");
+                    container.setAttribute("class", "border");
+                    var ahref = document.createElement("div");
+                    p.setAttribute("class", "full-width");
+                    ahref.setAttribute("href", "redditarticle.html?link=" + item.data.id);
+                    ahref.setAttribute("data-ajax", "false");
+                    var score = itemScore(item.data.score);
+                    var title = titleFormat(item.data.title);
+                    ahref.innerHTML = "<div class='reddit-toprow'>" + score + "<div class='reddit-row'>" + "<a data-ajax='false' href='redditarticle.html?link=" + item.data.id + "'>" + title + "</a></div></div><div class='reddit-author'>" + item.data.author + "</div>";
+                    p.appendChild(ahref);
+                    container.appendChild(p);
+                    div.appendChild(container);
+                });
+                slice.children.forEach(function(child, i) {
+                    var div = document.getElementById('list');
+                    //div.setAttribute("")
+                    var p = document.createElement("div");
+                    var container = document.createElement("div");
+                    container.setAttribute("class", "border");
+                    var ahref = document.createElement("div");
+                    p.setAttribute("class", "full-width");
+                    //console.log("ITEM DATA");
+                    //console.log(child.data);
+                    //ahref.setAttribute("href", "redditarticle.html?link=" + child.data.id);
+                    //ahref.setAttribute("data-ajax", "false");
+                    var score = itemScore(child.data.score);
+                    var title = titleFormat(child.data.title);
+                    ahref.innerHTML = "<div class='reddit-toprow'>" + score + "<div class='reddit-row'>" + "<a data-ajax='false' href='redditarticle.html?link=" + child.data.id + "'>" + title + "</a></div></div><div class='reddit-author'>" + child.data.author + "</div>";
+                    p.appendChild(ahref);
+                    container.appendChild(p);
+                    div.appendChild(container);
+                });
+            }
+
+            function getAll(section) {
+                if (typeof section !== "undefined") {
+                    document.getElementById("list").innerHTML = "";
+                    $.mobile.loading("show");
+                }
+                else {
+                    section = "hot";
+                }
+
+                var children = [];
+
+                function handleSlice(slice) {
+                    if (slice.empty) {
+                        return children;
+                    }
+                    printSlice(slice);
+                    children = children.concat(slice.children);
+                    if (slice.count > 1) {
+                        return;
+                    } else {
+                        return slice.next().then(handleSlice);
+                    }
+                }
+                return reddit('/r/TheRedPill/' + section).listing({
+                    limit: 50,
+                }).then(handleSlice);
+            }
+
+            getAll().done(function() {
+                $.mobile.loading("hide");
+            });
+        </script>
+        <div data-add-back-btn="true" data-role="page" id="redpillcalculator">
+            <div class="absolute-header" data-id="main-header" data-role="header"><a class="back-button" href="#" data-rel="back">BACK</a><h1>Redpill Man<a href="#page-messages"><img class="menu-mail"></a></h1></div>
+            <div class="tablist-content">
+
+                <div data-role="content" class="content">
+                    <form>
+                        <fieldset data-role="controlgroup">
+                            <h2>What is your current life focus?</h2>
+                            <input type="radio" name="radio-choice-1" id="radio-choice-1" value="choice-1">
+                            <label for="radio-choice-1">Dating</label>
+                            <input type="radio" name="radio-choice-1" id="radio-choice-2" value="choice-2">
+                            <label for="radio-choice-2">Financial/Professional</label>
+                            <input type="radio" name="radio-choice-1" id="radio-choice-3" value="choice-3">
+                            <label for="radio-choice-3">Education/Development</label>
+                            <input type="radio" name="radio-choice-1" id="radio-choice-4" value="choice-4">
+                            <label for="radio-choice-4">Social Status</label>
+                        </fieldset>
+                    </form>
+                    <a data-ajax="false" href="#quizPage" data-role="button">Start Quiz!</a>
+                </div>
+
+            </div>
+        </div>
+
+        <script src="js/quiz/app.js"></script>
+        <script src="js/quiz/quiz.js"></script>
+        <div data-role="page" id="quizPage">
+
+            <div class="absolute-header" data-id="main-header" data-role="header"><a class="back-button" href="#" data-rel="back">BACK</a><h1>Redpill Man<a href="#page-messages"><img class="menu-mail"></a></h1></div>
+
+            <div data-role="content">
+                <div class="quizdisplay"></div>
+            </div>
+            <script src="js/quiz/app.js"></script>
+            <script src="js/quiz/quiz.js"></script>
+        </div>
+
+        <div data-role="page" id="page-password">
+            <script>
+            function saveCredentials() {
+                var username = document.getElementById('username');
+                var password = document.getElementById('password');
+                localStorage.setItem("password", password.value);
+                localStorage.setItem("username", username.value);
+            }
+            </script>
+
+            <div class="absolute-header" data-id="main-header" data-role="header"><a class="back-button" href="#" data-rel="back">BACK</a><h1>Redpill Man<a href="#page-messages"><img class="menu-mail"></a></h1></div>
+            <h2>Enter Your User Credentials</h2>
+            <div class="ui-content">
+                If you want to use any logged in Reddit functions (such as up or down-voting or making comments), enter your credentials here.
+            </div>
+            <div id="credentials" data-role="fieldcontain" class="ui-hide-label ui-content">
+                <input type="text" class="ui-content" name="username" id="username" value="" placeholder="Username"/>
+                <input type="password" class="ui-content" name="password" id="password" value="" placeholder="Password"/>
+                <button onclick="saveCredentials()" data-role="button" class="ui-btn-inline ">Save</button>
+            </div>
+            <script>
+                if (localStorage.username) {
+                    document.getElementById("username").value = localStorage.username;
+                }
+                if (localStorage.password) {
+                    document.getElementById("password").value = localStorage.password;
+                }
+            </script>
+        </div>
+
+
+        <div data-role="page" id="page-dictionary-front">
+            <script>
+
+                $.get("dictionary.json", function(json) {
+                    var dictSet = document.getElementById("collapsiblesetForFilterChildren")
+                    json.terms.forEach(function(terms) {
+                        var collapsible = document.createElement("div");
+                        collapsible.setAttribute("data-role", "collapsible");
+                        var itemTitle = document.createElement("h3");
+                        itemTitle.innerHTML = terms.name;
+                        var elements = document.createElement("div");
+                        elements.setAttribute("class", "elements");
+                        elements.setAttribute("data-input", "#searchForCollapsibleSetChildren");
+                        elements.setAttribute("data-filter", "true");
+                        var p = document.createElement("p");
+                        p.innerHTML = terms.definition;
+
+                        elements.appendChild(p);
+                        collapsible.appendChild(itemTitle);
+                        collapsible.appendChild(elements);
+                        dictSet.appendChild(collapsible);
+                    });
+                }, "json");
+            </script>
+            <div class="absolute-header" data-id="main-header" data-role="header"><a class="back-button" href="#" data-rel="back">BACK</a><h1>Redpill Man<a href="#page-messages"><img class="menu-mail"></a></h1></div>
+
+            <div data-role="main" class="ui-content content">
+                <h3 class="center-h3">Dictionary Search</h3>
+                <form>
+                    <input data-type="search" id="searchForCollapsibleSetChildren">
+                </form>
+                <div data-role="collapsible-set" data-filter="true" data-children="> div, > div div ul li" data-inset="true" id="collapsiblesetForFilterChildren" data-input="#searchForCollapsibleSetChildren">
+                </div>
+            </div>
+        </div>
+
+        <div data-role="page" id="page-resources">
+            <div class="absolute-header" data-id="main-header" data-role="header"><a class="back-button" href="#" data-rel="back">BACK</a><h1>Redpill Man<a href="#page-messages"><img class="menu-mail"></a></h1></div>
+            <div data-role="main" class="content">
+                <h3 class="center-h3">Quality Resources</h3>
+                <div class="border">
+                    <div class="reddit-toprow">
+                        <div class="reddit-row">
+                            <a href="https://twitter.com/gaylubeoil">GayLubeOil</a><br />
+                        </div></div></div>
+                <div class="border">
+                    <div class="reddit-toprow">
+                        <div class="reddit-row">
+                            <a href="http://illimitablemen.com/">Illimitable Man</a><br />
+                        </div></div></div>
+                <div class="border">
+                    <div class="reddit-toprow">
+                        <div class="reddit-row">
+                            <a href="http://puerarchy.com/">Puerarchy - RPS</a><br />
+                        </div></div></div>
+                <div class="border">
+                    <div class="reddit-toprow">
+                        <div class="reddit-row">
+                            <a href='https://heartiste.wordpress.com/'>Chateau Heartiste</a><br />
+                        </div></div></div>
+                <div class="border">
+                    <div class="reddit-toprow">
+                        <div class="reddit-row">
+                            <a href="https://dalrock.wordpress.com/">Dalrock</a><br />
+                        </div></div></div>
+                <div class="border">
+                    <div class="reddit-toprow">
+                        <div class="reddit-row">
+                            <a href="http://therationalmale.com/">The Rational Male</a><br />
+                        </div></div></div>
+
+            </div>
+        </div>
+
+
+        <div data-role="page" id="page-messages">
+            <script>
+                function switchContent() {
+                    getAllComments("unread").done(function() {
+                        $.mobile.loading("hide");
+                    });
+                }
+
+
+                var reddit = new window.Snoocore({
+                    userAgent: 'Redpill Man',
+                    login: {username: localStorage.username, password: localStorage.password}
+
+                });
+                var loginPromise = reddit.login();
+
+                reddit.raw('http://www.reddit.com/api/me.json').get({
+                }).then(function(data) {
+                    mainReddit(data);
+                });
+
+                /*
+                 * Grabs the reddit content
+                 */
+                function getAllComments() {
+
+                    var children = [];
+
+                    function handleSliceComments(slice) {
+                        if (slice.empty) {
+                            return children;
+                        }
+
+                        printSliceComments(slice);
+                        //children = children.concat(slice.children);
+                        if (slice.count > 1) {
+                            return;
+                        }
+                        else {
+                            return slice.next().then(handleSliceComments);
+                        }
+                    }
+                    return reddit.raw('http://www.reddit.com/message/unread.json').get({
+                    }).then(handleSliceComments);
+                }
+
+                function printSliceComments(slice) {
+                    slice.data.children.forEach(function(item) {
+                        var output = document.getElementById("output-message");
+                        var message = document.createElement("div");
+                        message.setAttribute("class", "gray");
+                        message.innerHTML = "<div class='comment-author'>" + item.data.author + "</div><div class='comment-subject'>" + item.data.subject + "</div><div class='reddit-row'>" + item.data.body + "</div>";
+                        output.appendChild(message);
+                    });
+                }
+
+
+
+                /*
+                 * Main function, allows processing of everything
+                 */
+                function mainReddit(data) {
+                    //var mail = document.getElementById("mail");
+                    //mail.setAttribute("src", "orange mail.png");
+                    getAllComments().done();
+                }
+            </script>
+            <div class="absolute-header" data-id="main-header" data-role="header"><a class="back-button" href="#" data-rel="back">BACK</a><h1>Redpill Man<a href="#page-messages"><img class="menu-mail"></a></h1></div>
+            <div data-role="main" class="content">
+                <h3 class="center-h3">Messages</h3>
+                <div class="controls" data-mini="true" data-type="horizontal" data-role="controlgroup">
+                    <a href="#" onclick="switchContent()" data-role="button">Inbox</a>
+                    <a href="#" onclick="switchContent()" data-role="button">Unread</a>
+                    <a href="#" onclick="switchContent()" data-role="button">Sent</a>
+                </div>
+                <div id="output-message"></div>
+            </div>
+        </div>
+    </body>
+</html>
